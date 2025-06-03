@@ -3,7 +3,8 @@ cfg <- list(
   
   # Packages to load
   pkgs = c("dplyr", "survival", "data.table", "tidyr", "memoise", "Rsolnp",
-           "numDeriv", "lubridate", "ggplot2", "readstata13", "magrittr"),
+           "numDeriv", "lubridate", "ggplot2", "readstata13", "magrittr",
+           "haven"),
   
   # These options are for MAIN.R
   run_sims = F,

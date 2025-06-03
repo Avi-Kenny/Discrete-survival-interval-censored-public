@@ -13,8 +13,113 @@ log_note <- function(note, num_rows) {
   dat_log[nrow(dat_log)+1,] <<- list(note, num_rows)
 }
 
+# Code ported from S.O. repo (with slight adaptations)
+{
+  # Read in raw data
+  pip_df_orig <- read_dta("../Data/SurveillanceEpisodesHIV.dta")
+  pip_df <- pip_df_orig
+  names(pip_df) <- tolower(names(pip_df))
+  
+  # Getting first and last dates
+  pip_df %<>% 
+    group_by(iintid) %>% 
+    mutate(dt_first_pip = min(startdate),
+           dt_last_pip = max(enddate)) %>% 
+    ungroup()
+  
+  pip_df_collapsed <- pip_df %>% 
+    select(iintid, sex, dob, dod, dt_first_pip, dt_last_pip) %>% 
+    distinct(.keep_all = TRUE)
+  
+  # Entry and exit variables
+  pip_df_collapsed <- pip_df_collapsed %>% 
+    mutate(enter = dt_first_pip,
+           exit = dt_last_pip)
+  
+  # Individuals whose enter and exit date are the same - either their DoB and DoD are the same or they have had only one visit
+  # dropping them for now
+  pip_df_collapsed %<>% filter(enter!=exit)
+  
+  # Expanding by year
+  pip_df_year <- pip_df_collapsed %>% 
+    rowwise() %>% 
+    mutate(Year = list(seq(floor_date(enter, "year"), 
+                           floor_date(exit, "year"), 
+                           by = "year"))) %>% 
+    unnest(Year) 
+  
+  pip_df_collapsed <- pip_df %>% 
+    select(iintid, sex, dob, dod, dt_first_pip, dt_last_pip) %>% 
+    distinct(.keep_all = TRUE)
+  
+  # Adding failure variable (died)
+  pip_df_year %<>% mutate(
+    died = as.integer(
+      !is.na(dod) & floor_date(dod, "year") == floor_date(Year, "year")
+    )
+  )
+  
+  rm(pip_df)
+  rm(pip_df_collapsed)
+
+  # HIV testing
+  hiv_results_year <- pip_df_orig %>% 
+    filter(!is.na(ResultDate)) %>%  
+    mutate(Year = year(ResultDate)) %>% 
+    select(IIntId, Year,  ResultDate, HIVResult, DoB) %>% 
+    distinct() 
+  hiv_results_year %<>% 
+    group_by(IIntId, Year) %>% 
+    mutate(last_hiv_test_year = max(ResultDate)) %>% 
+    ungroup() %>% 
+    filter(ResultDate == last_hiv_test_year) %>% 
+    select(IIntId, Year, ResultDate, HIVResult, DoB)
+  rm(pip_df_orig)
+  
+  # Linking PIP data split into years
+  pip_df_year %<>% 
+    select(iintid, Year, sex, dob, died) %>% 
+    rename(IIntId = iintid) %>%
+    mutate(sex = factor(as_factor(sex)),
+           Year = year(Year))
+  
+  pip_combined_hiv_df <- pip_df_year %>% 
+    left_join(hiv_results_year, by = c("IIntId", "Year")) 
+  
+  pip_combined_hiv_df %<>% 
+    mutate(HIV_update = case_when(HIVResult == "P" ~ 1,
+                                  HIVResult == "N" ~0))
+  
+  pip_combined_hiv_df %<>%
+    mutate(dob = ymd(dob,tz = "Africa/Johannesburg")) %>% 
+    mutate(year_begin = ymd(paste0(Year, "-01-01"), tz= "Africa/Johannesburg")) %>% 
+    mutate(year_end = ymd(paste0(Year, "-12-31"), tz= "Africa/Johannesburg")) %>% 
+    mutate(age_start = as.duration(dob %--% year_begin)/ dyears(1)) %>% 
+    mutate(age_end = as.duration(dob %--% year_end)/ dyears(1))
+  
+  pip_combined_hiv_df %<>% 
+    group_by(IIntId, HIVResult) %>%
+    mutate(first_hiv_pos = min(Year[HIVResult == "P"]),
+           last_hiv_neg = max(Year[HIVResult == "N"])) %>%
+    ungroup() %>% 
+    mutate(first_hiv_pos =case_when(first_hiv_pos == Inf ~ NA,
+                                    TRUE ~ first_hiv_pos)) %>% 
+    mutate(last_hiv_neg = case_when(last_hiv_neg == -Inf ~ NA,
+                                    TRUE ~ last_hiv_neg))
+  
+  # Modifications to decrease file size
+  pip_combined_hiv_df %<>% mutate(
+    age_start = round(age_start),
+    age_end = round(age_end),
+  )
+  
+  rm(pip_df_year)
+  rm(hiv_results_year)
+  
+}
+
 # Read in data
-dat_prc <- readRDS("../Data/pip_combined_hiv_2025-01-01.rds")
+dat_prc <- pip_combined_hiv_df
 dat_prc %<>% dplyr::ungroup()
 
 log_note("# rows, original", nrow(dat_prc))
