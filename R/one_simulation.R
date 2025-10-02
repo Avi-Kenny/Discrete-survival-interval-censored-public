@@ -10,13 +10,21 @@ one_simulation <- function() {
   
   chk(0, "START")
   
+  # Set global model objects
+  list_1 <- c("par_y", "par_x", "par_s", "terms_y", "terms_x", "terms_s",
+              "terms_y2", "terms_x2", "terms_s2")
+  list_2 <- list(par_y_F, par_x_F, par_s_F, terms_y_F, terms_x_F, terms_s_F,
+              terms_y2_F, terms_x2_F, terms_s2_F)
+  for (i in c(1:9)) {
+    assign(list_1[[i]], list_2[[i]], envir=.GlobalEnv)
+  }
+
   # Generate and transform dataset
   dat <- generate_data(
     n = L$n,
     max_time = L$max_time,
-    params = L$par
+    par = L$par
   )
-  
   dat_objs <- transform_dataset(dat=dat, window_start=1, window_end=9999)
   dat_i_names <- names(dat_objs[[1]]$dat_i)
   n <- attr(dat, "n")
@@ -30,8 +38,8 @@ one_simulation <- function() {
   # Set initial parameter vector
   if (L$model_version==1) {
     par_init <- log(c(
-      a_x=0.055, g_x1=1.2, g_x2=1.1, t_x=1,
-      a_s=0.22, g_s1=1.8, g_s2=1.2, t_s=1, 
+      a_x=0.055, g_x1=1.2, g_x2=1.1, t_x1=1,
+      a_s=0.22, g_s1=1.8, g_s2=1.2, t_s1=1, 
       beta_x=1.4,
       a_y=0.025, g_y1=1.3, g_y2=1, t_y=1
     ))
