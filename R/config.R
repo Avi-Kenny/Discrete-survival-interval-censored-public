@@ -7,12 +7,12 @@ cfg <- list(
            "haven"),
   
   # These options are for MAIN.R
-  run_sims = F,
-  run_analysis = T,
+  run_sims = T,
+  run_analysis = F,
   run_process_results = F,
 
   # These options are for data analysis
-  model_version = 2,
+  # model_version = 2,
   w_start = 2010,
   w_end = 2022,
   age_end = 60,
@@ -21,12 +21,12 @@ cfg <- list(
   save_dat = T,
   
   # These options are for simulations
-  # model_version = 1,
+  model_version = 1,
   sim_level_set = "level_set_1",
   sim_run_or_update = "run",
   sim_num = 1000,
-  # sim_n_cores = 300, # For parallelizing via job arrays
-  sim_n_cores = as.integer(Sys.getenv("SLURM_CPUS_PER_TASK")), # For parallelizing across multiple CPUs within a single task
+  sim_n_cores = 350, # For parallelizing via job arrays
+  # sim_n_cores = as.integer(Sys.getenv("SLURM_CPUS_PER_TASK")), # For parallelizing across multiple CPUs within a single task
   sim_stop_at_error = F,
   
   # These options are for both sims and analysis
@@ -56,10 +56,17 @@ if (Sys.getenv("HOME")=="/home/akenny") {
                  "/Code__", Sys.getenv("proj"))
   )
 } else if (Sys.getenv("HOME")=="/hpc/home/ak811") {
-  # DCC
+  # Duke DCC
   cluster_config <- list(
     js = "slurm",
     dir = paste0("/hpc/home/ak811/", Sys.getenv("proj"),
+                 "/Code__", Sys.getenv("proj"))
+  )
+} else if (Sys.getenv("HOME")=="/home/ak811") {
+  # Duke RCC
+  cluster_config <- list(
+    js = "slurm",
+    dir = paste0("/shared/home/ak811/", Sys.getenv("proj"),
                  "/Code__", Sys.getenv("proj"))
   )
 } else {
