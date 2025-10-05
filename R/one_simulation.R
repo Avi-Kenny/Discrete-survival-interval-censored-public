@@ -52,7 +52,7 @@ one_simulation <- function() {
   opt <- stats::optim(
     par = par_init,
     fn = negloglik,
-    method = "Nelder-Mead",
+    method = "L-BFGS-B",
     control = list(maxit=cfg$opt_maxit, reltol=cfg$opt_reltol)
   )
   chk(2, "optim: END")
