@@ -22,8 +22,8 @@ if (cfg$process_sims) {
   p_set <- "10% testing"
   
   # p_names should match those used by negloglik()
-  p_names <- c("a_x", "g_x1", "g_x2", "t_x",
-               "a_s", "g_s1", "g_s2", "t_s",
+  p_names <- c("a_x", "g_x1", "g_x2", "t_x1",
+               "a_s", "g_s1", "g_s2", "t_s1",
                "beta_x",
                "a_y", "g_y1", "g_y2", "t_y")
   p <- sim$levels$par[[p_set]]
