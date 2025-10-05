@@ -36,8 +36,8 @@ log_note <- function(note, num_rows) {
     mutate(enter = dt_first_pip,
            exit = dt_last_pip)
   
-  # Individuals whose enter and exit date are the same - either their DoB and DoD are the same or they have had only one visit
-  # dropping them for now
+  # Individuals whose enter and exit date are the same - either their DoB and
+  # DoD are the same or they have had only one visit; dropping them for now
   pip_df_collapsed %<>% filter(enter!=exit)
   
   # Expanding by year
@@ -140,8 +140,8 @@ dat_prc %<>% dplyr::rename(
 )
 
 # Drop unnecessary columns
-dat_prc %<>% subset(select=-c(LocationId, EarliestARTInitDate, HIV_update, age_start,
-                              age_end, first_hiv_pos, last_hiv_neg))
+dat_prc %<>% subset(select=-c(LocationId, EarliestARTInitDate, HIV_update,
+                              age_start, age_end, first_hiv_pos, last_hiv_neg))
 
 # Function to convert dates
 convert_date <- memoise(function(date) {
