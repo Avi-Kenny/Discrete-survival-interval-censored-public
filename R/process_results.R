@@ -17,7 +17,7 @@ cfg$ests_F <- readRDS(cfg$ests_F)
 
 if (cfg$process_sims) {
   
-  sim <- readRDS("SimEngine.out/sim_20240719.rds")
+  sim <- readRDS("SimEngine.out/sim_20251006 (BFGS).rds")
   
   p_set <- "10% testing"
   
