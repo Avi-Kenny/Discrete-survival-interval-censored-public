@@ -25,6 +25,29 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
     par = list("10% testing"=par_10)
   )
   
+  # Simulation 2: expanded level sets (24 combinations)
+  par_full <- list()
+  counter <- 1
+  for (a_x in c(-3,-2)) {
+    for (beta_x in c(0.2,0.4)) {
+      for (t_y in c(-0.1,0.1)) {
+        label <- paste0("a_x=",a_x,", beta_x=",beta_x,", t_y=",t_y)
+        par_new <- par_10
+        par_new$a_x <- a_x
+        par_new$beta_x <- beta_x
+        par_new$t_y <- t_y
+        par_full[[label]] <- par_new
+        counter <- counter + 1
+      }
+    }
+  }
+  level_sets[["level_set_2"]] <- list(
+    n = c(500,1000), # Two sample sizes
+    max_time = 20,
+    model_version = 1,
+    par = par_full
+  )
+  
   level_set <- level_sets[[cfg$sim_level_set]]
   
 }

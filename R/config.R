@@ -24,7 +24,7 @@ cfg <- list(
   
   # These options are for simulations
   model_version = 1,
-  sim_level_set = "level_set_1",
+  sim_level_set = "level_set_2",
   sim_run_or_update = "run",
   sim_num = 1000,
   sim_n_cores = 350, # For parallelizing via job arrays
