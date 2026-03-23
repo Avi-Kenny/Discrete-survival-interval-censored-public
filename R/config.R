@@ -19,6 +19,8 @@ cfg <- list(
   model_sex = Sys.getenv("model_sex"), # This is set in the Slurm `sbatch` call
   samp_size = 0, # 0 means the full dataset is used, otherwise a subsample is used
   save_dat = T,
+  exclude_unknown = F, # Set to TRUE to exclude "unknown time" (sensitivity analysis)
+  exclude_never_testers = F, # Set to TRUE to exclude those who never tested (sensitivity analysis)
   
   # These options are for simulations
   model_version = 1,

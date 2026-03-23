@@ -287,9 +287,6 @@ log_note("# rows, final", nrow(dat_prc))
 log_note("# individuals, final", length(unique(dat_prc$id)))
 log_note("# deaths, final", sum(dat_prc$died))
 
-# Print data log
-print(dat_log)
-
 # Rename columns
 dat_prc %<>% dplyr::rename(
   "y" = died,
@@ -315,6 +312,75 @@ dat_grp %<>% dplyr::mutate(
     TRUE ~ 999
   )
 )
+
+# Remove most "unknown" data
+if (cfg$exclude_unknown) {
+  
+  # 1. Make changes to `dat_grp`
+  dat_grp %<>% dplyr::mutate(
+    
+    # Mark never-testers to drop (case 1)
+    drop = as.integer(case==1),
+    
+    # Set start date to date of first test (cases 2,3,4)
+    s_i = case_when(
+      case==1 ~ s_i,
+      case %in% c(2,3) ~ T_minus,
+      case==4 ~ T_plus
+    ),
+    
+    # Set end date two years after most recent negative test (case 2)
+    t_i = ifelse(case==2, pmin(t_i,T_minus+2), t_i)
+    
+  )
+  
+  # 2. Vector of IDs to drop
+  ids_to_drop <- dat_grp$id[dat_grp$drop==1]
+  
+  # 3. Filter out never-testers
+  dat_prc %<>% dplyr::filter(!(id %in% ids_to_drop))
+  dat_grp %<>% dplyr::filter(drop==0)
+  dat_grp$drop <- NULL
+  
+  # 4. Remove data before start date and after end date
+  dat_prc$drop <- rep(0,nrow(dat_prc))
+  for (row in c(1:nrow(dat_prc))) {
+    r_prc <- dat_prc[row,]
+    index_grp <- which(as.numeric(dat_grp$id)==as.numeric(r_prc$id))
+    r_grp <- dat_grp[index_grp,]
+    drop <- as.integer(r_prc$t_end<r_grp$s_i || r_prc$t_end>r_grp$t_i)
+    dat_prc$drop[row] <- drop
+  }
+  dat_prc %<>% dplyr::filter(drop==0)
+  dat_prc$drop <- NULL
+  
+  # Log notes
+  log_note("# rows, final (cfg$exclude_unknown==T)", nrow(dat_prc))
+  log_note("# individuals, final (cfg$exclude_unknown==T)", length(unique(dat_prc$id)))
+  log_note("# deaths, final (cfg$exclude_unknown==T)", sum(dat_prc$y))
+  
+} else if (cfg$exclude_never_testers) {
+  
+  # 1. Mark never-testers to drop (case 1)
+  dat_grp %<>% dplyr::mutate(drop=as.integer(case==1))
+  
+  # 2. Vector of IDs to drop
+  ids_to_drop <- dat_grp$id[dat_grp$drop==1]
+  
+  # 3. Filter out never-testers
+  dat_prc %<>% dplyr::filter(!(id %in% ids_to_drop))
+  dat_grp %<>% dplyr::filter(drop==0)
+  dat_grp$drop <- NULL
+  
+  # Log notes
+  log_note("# rows, final (cfg$exclude_never_testers==T)", nrow(dat_prc))
+  log_note("# individuals, final (cfg$exclude_never_testers==T)", length(unique(dat_prc$id)))
+  log_note("# deaths, final (cfg$exclude_never_testers==T)", sum(dat_prc$y))
+  
+}
+
+# Print data log
+print(dat_log)
 
 # Renumber IDs
 dat_prc %<>% dplyr::mutate(
