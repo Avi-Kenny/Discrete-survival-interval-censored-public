@@ -117,6 +117,110 @@ if (cfg$process_sims) {
     row.names = FALSE
   )
   
+  
+  
+  
+  
+  # Table for expanded param sets
+  sim <- readRDS("SimEngine.out/sim_20260325 (expanded param set).rds")
+
+  sim$results %<>% dplyr::mutate(
+    a_x_true = ifelse(level_id<=4, -3, -2),
+    beta_x_true = ifelse(level_id %in% c(1:2,5:6), 0.2, 0.4),
+    t_y_true = ifelse(level_id %in% c(1,3,5,7), -0.1, -0.05),
+  )
+  
+  summ <- sim %>% SimEngine::summarize(
+    list(stat="mean", x="a_x_true", name="a_x_true"),
+    list(stat="mean", x="beta_x_true", name="beta_x_true"),
+    list(stat="mean", x="t_y_true", name="t_y_true"),
+    
+    # Mean
+    list(stat="mean", name="Mean_a_x", x="lik_M_a_x_est"),
+    list(stat="mean", name="Mean_beta_x", x="lik_M_beta_x_est"),
+    list(stat="mean", name="Mean_t_y", x="lik_M_t_y_est"),
+    
+    # Bias
+    list(stat="bias", name="Bias_a_x", estimate="lik_M_a_x_est", truth="a_x_true"),
+    list(stat="bias", name="Bias_beta_x", estimate="lik_M_beta_x_est", truth="beta_x_true"),
+    list(stat="bias", name="Bias_t_y", estimate="lik_M_t_y_est", truth="t_y_true"),
+    
+    # Coverage
+    list(stat="coverage", name="Cov_a_x", estimate="lik_M_a_x_est", se="lik_M_a_x_se", truth="a_x_true", na.rm=T),
+    list(stat="coverage", name="Cov_beta_x", estimate="lik_M_beta_x_est", se="lik_M_beta_x_se", truth="beta_x_true", na.rm=T),
+    list(stat="coverage", name="Cov_t_y", estimate="lik_M_t_y_est", se="lik_M_t_y_se", truth="t_y_true", na.rm=T),
+    
+    # Mean estimated SD
+    list(stat="mean", name="SD_est_a_x", x="lik_M_a_x_se", na.rm=T),
+    list(stat="mean", name="SD_est_beta_x", x="lik_M_beta_x_se", na.rm=T),
+    list(stat="mean", name="SD_est_t_y", x="lik_M_t_y_se", na.rm=T),
+    
+    # Empirical SD
+    list(stat="sd", name="SD_actual_a_x", x="lik_M_a_x_est"),
+    list(stat="sd", name="SD_actual_beta_x", x="lik_M_beta_x_est"),
+    list(stat="sd", name="SD_actual_t_y", x="lik_M_t_y_est")
+    
+  )
+  
+  # !!!!! CONTINUE
+  
+  # a_x, beta_x, t_y
+  summ_mean <- summ_bias <- summ_mean2 <- summ_sd <- summ_cov <- list()
+  for (i in c(1:length(p_names))) {
+    p <- p_names[i]
+    summ_mean[[i]] <- list(stat="mean",
+                           name=paste0(p,"__est"),
+                           x=paste0("lik_M_",p,"_est"), na.rm=T)
+    summ_bias[[i]] <- list(stat="bias",
+                           name=paste0(p,"__bias"),
+                           estimate=paste0("lik_M_",p,"_est"),
+                           truth=true_vals[[p]])
+    summ_mean2[[i]] <- list(stat="mean",
+                            name=paste0(p,"__sd_est"),
+                            x=paste0("lik_M_",p,"_se"), na.rm=T)
+    summ_sd[[i]] <- list(stat="sd", name=paste0(p,"__sd_actual"),
+                         x=paste0("lik_M_",p,"_est"), na.rm=T)
+    summ_cov[[i]] <- list(stat="coverage", name=paste0(p,"__cov"),
+                          truth=true_vals[i],
+                          estimate=paste0("lik_M_",p,"_est"),
+                          se=paste0("lik_M_",p,"_se"), na.rm=T)
+  }
+  summ <- do.call(
+    SimEngine::summarize,
+    c(list(sim), summ_mean, summ_bias, summ_mean2, summ_sd, summ_cov)
+  )
+  l_id <- 1
+  summ2 <- summ[summ$level_id==l_id]
+  df_results <- data.frame(
+    "par" = character(),
+    "truth" = double(),
+    "est" = double(),
+    "bias" = double(),
+    "sd_est" = double(),
+    "sd_actual" = double(),
+    "coverage" = double()
+  )
+  for (p in p_names) {
+    df_results[nrow(df_results)+1,] <- c(
+      p,
+      true_vals[[p]],
+      round(summ[[paste0(p,"__est")]], 3),
+      round(summ[[paste0(p,"__bias")]], 3),
+      round(summ[[paste0(p,"__sd_est")]], 3),
+      round(summ[[paste0(p,"__sd_actual")]], 3),
+      round(summ[[paste0(p,"__cov")]], 3)
+    )
+  }
+  utils::write.table(
+    x = df_results,
+    file = paste0("../Figures + Tables/", c_date, " sims_sd_and_coverage.csv"),
+    sep = ",",
+    row.names = FALSE
+  )
+  
+  
+  
+  
 }
 
 

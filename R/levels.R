@@ -30,7 +30,7 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
   counter <- 1
   for (a_x in c(-3,-2)) {
     for (beta_x in c(0.2,0.4)) {
-      for (t_y in c(-0.1,0.1)) {
+      for (t_y in c(-0.1,-0.05)) {
         label <- paste0("a_x=",a_x,", beta_x=",beta_x,", t_y=",t_y)
         par_new <- par_10
         par_new$a_x <- a_x
@@ -42,7 +42,7 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
     }
   }
   level_sets[["level_set_2"]] <- list(
-    n = c(500,1000), # Two sample sizes
+    n = 1000,
     max_time = 20,
     model_version = 1,
     par = par_full
